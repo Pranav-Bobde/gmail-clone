@@ -1,19 +1,36 @@
-import { Checkbox, IconButton } from '@material-ui/core'
-import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown'
-import RedoIcon from '@material-ui/icons/Redo'
-import MoreVertIcon from '@material-ui/icons/MoreVert'
-import ChevronLeftIcon from '@material-ui/icons/ChevronLeft'
-import ChevronRightIcon from '@material-ui/icons/ChevronRight'
-import SettingsIcon from '@material-ui/icons/Settings'
-import InboxIcon from '@material-ui/icons/Inbox'
-import PeopleIcon from '@material-ui/icons/People'
-import LocalOfferIcon from '@material-ui/icons/LocalOffer'
-import Section from "./Section"
-import React from 'react'
-import "./EmailList.css"
-import EmailRow from './EmailRow'
+import { Checkbox, IconButton } from "@material-ui/core";
+import ArrowDropDownIcon from "@material-ui/icons/ArrowDropDown";
+import RedoIcon from "@material-ui/icons/Redo";
+import MoreVertIcon from "@material-ui/icons/MoreVert";
+import ChevronLeftIcon from "@material-ui/icons/ChevronLeft";
+import ChevronRightIcon from "@material-ui/icons/ChevronRight";
+import SettingsIcon from "@material-ui/icons/Settings";
+import InboxIcon from "@material-ui/icons/Inbox";
+import PeopleIcon from "@material-ui/icons/People";
+import LocalOfferIcon from "@material-ui/icons/LocalOffer";
+import Section from "./Section";
+import React from "react";
+import "./EmailList.css";
+import EmailRow from "./EmailRow";
+import { useEffect, useState } from "react";
+import { db } from "./firebase";
 
 const EmailList = () => {
+  const [emails, setEmails] = useState([]);
+
+  useEffect(() => {
+    db.collection("emails")
+      .orderBy("timestamp", "desc")
+      .onSnapshot((snapshot) => {
+        setEmails(
+          snapshot.docs.map((doc) => ({
+            id: doc.id,
+            data: doc.data(),
+          }))
+        );
+      });
+  }, []);
+
   return (
     <div className="emailList">
       <div className="emailList__settings">
@@ -28,7 +45,7 @@ const EmailList = () => {
           <IconButton>
             <MoreVertIcon />
           </IconButton>
-        </div>   
+        </div>
         <div className="emailList__settingsRight">
           <IconButton>
             <ChevronLeftIcon />
@@ -39,7 +56,7 @@ const EmailList = () => {
           <IconButton>
             <SettingsIcon />
           </IconButton>
-        </div>   
+        </div>
       </div>
 
       <div className="emailList__sections">
@@ -49,22 +66,19 @@ const EmailList = () => {
       </div>
 
       <div className="emailList__List">
-        <EmailRow 
-        title="Twitch"
-        subject="Hey guys"
-        description="Boku wa saikyo!"
-        time="10pm"
-        />
-        <EmailRow 
-        title="Twitch"
-        subject="Hey guys"
-        description="Boku wa saikyo!"
-        time="10pm"
-        />
-
+        {emails.map(({ id, data: { to, subject, message, timestamp } }) => {
+          return <EmailRow
+            id={id}
+            key={id}
+            title={to}
+            subject={subject}
+            description={message}
+            time={new Date(timestamp?.seconds*1000).toUTCString()}
+          />;
+        })}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default EmailList
+export default EmailList;
